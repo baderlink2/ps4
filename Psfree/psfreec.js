@@ -683,7 +683,6 @@ async function make_arw(reader, view2, pop) {
 }
 
 async function run_psfree() {
-    StartTimer();
     //showMessage("Webkit exploit (PSFree15b) (Step 0 - UaF SSV)"),    
     debug_log('STAGE: UaF SSV');
     const [fsets, indices] = prepare_uaf();
