@@ -51,6 +51,7 @@ document.getElementById("progress").style.display = "none";
 
 function allset(){
 msgs.innerHTML = LoadedMSG
+}
 
   function loadFile(fileName) {
     let xhr = new XMLHttpRequest();
@@ -146,6 +147,7 @@ function load_poc(){
    chain.call(libKernelBase.add32(OFFSET_lk_pthread_create), pthread, 0x0, payload_buffer, 0);
    allset();
   }
+ };
 }
 
 function load_binloader(){
