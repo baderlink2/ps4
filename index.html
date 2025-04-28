@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>WELCOME TO BADERLINK NEW Double Psfree PSFREE FASTER Exfat USB</title>
+<title>WELCOME TO BADERLINK NEW double PSFREE FASTER Exfat USB</title>
 <script>
 if (window.applicationCache.status=='0'){window.location.replace("cache.html");}
 </script>
@@ -13,7 +13,7 @@ if (window.applicationCache.status=='0'){window.location.replace("cache.html");}
 </head>
 <body>
 <div id='console'></div>
-<h1 id="msgs">BADERLINK NEW Double Psfree PSFREE FASTER 9.00</h1>
+<h1 id="msgs">BADERLINK NEW Double PSFREE FASTER 9.00</h1>
 <hr>
 <br>
 <div id="progress">
@@ -28,6 +28,7 @@ if (window.applicationCache.status=='0'){window.location.replace("cache.html");}
 function jbdone(){
 document.getElementById("menu").style.display = "block";
 document.getElementById("progress").style.display = "none";
+load_poc();
 }
 
 function linux_group(){
@@ -130,7 +131,7 @@ var payload_buffer = chain.syscall(477, 0, 0x300000, 7, 0x1002, -1, 0);
 function load_poc(){
  var req = new XMLHttpRequest();
  req.responseType = "arraybuffer";
- req.open('GET', PLfile);
+ req.open('GET', "goldhen.bin");
  req.send();
  req.onreadystatechange = function () {
   if (req.readyState == 4) {
