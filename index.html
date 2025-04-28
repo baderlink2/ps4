@@ -28,7 +28,7 @@ if (window.applicationCache.status=='0'){window.location.replace("cache.html");}
 function jbdone(){
 document.getElementById("menu").style.display = "block";
 document.getElementById("progress").style.display = "none";
-load_poc();
+load_goldhen23();
 }
 
 function linux_group(){
@@ -131,7 +131,7 @@ var payload_buffer = chain.syscall(477, 0, 0x300000, 7, 0x1002, -1, 0);
 function load_poc(){
  var req = new XMLHttpRequest();
  req.responseType = "arraybuffer";
- req.open('GET', "goldhen.bin");
+ req.open('GET', PLfile);
  req.send();
  req.onreadystatechange = function () {
   if (req.readyState == 4) {
@@ -146,7 +146,7 @@ function load_poc(){
    pl.set(shellcode,0);
    var pthread = p.malloc(0x10);
    chain.call(libKernelBase.add32(OFFSET_lk_pthread_create), pthread, 0x0, payload_buffer, 0);
-   //allset();
+   allset();
   }
  };
 }
