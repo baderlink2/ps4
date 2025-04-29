@@ -7,6 +7,7 @@
     body { font-family: sans-serif; padding: 20px; }
     textarea { width: 100%; height: 120px; }
     input, button { width: 100%; padding: 10px; margin: 5px 0; }
+    .toggle { background: #f0f0f0; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -14,21 +15,24 @@
   <h2>Game Install Button Generator</h2>
 
   <label>Game Link:</label>
-  <input type="text" id="gameLink">
+  <input type="text" id="gameLink" oninput="autoGenerate()">
 
   <label>Image Link:</label>
-  <input type="text" id="gamePhoto">
+  <input type="text" id="gamePhoto" oninput="autoGenerate()">
 
   <label>Game Name:</label>
-  <input type="text" id="gameName">
+  <input type="text" id="gameName" oninput="autoGenerate()">
 
   <button onclick="generateCode()">Generate Code</button>
+  <button class="toggle" onclick="toggleAuto()">Toggle Auto Generate: <span id="autoStatus">OFF</span></button>
 
   <h3>Output:</h3>
   <textarea id="output" readonly></textarea>
   <button onclick="copyToClipboard()">Copy</button>
 
   <script>
+    let autoEnabled = false;
+
     function generateCode() {
       const link = document.getElementById('gameLink').value;
       const photo = document.getElementById('gamePhoto').value;
@@ -39,6 +43,18 @@
 </button>`;
 
       document.getElementById('output').value = html;
+    }
+
+    function autoGenerate() {
+      if (autoEnabled) {
+        generateCode();
+      }
+    }
+
+    function toggleAuto() {
+      autoEnabled = !autoEnabled;
+      document.getElementById('autoStatus').innerText = autoEnabled ? "ON" : "OFF";
+      if (autoEnabled) generateCode();
     }
 
     function copyToClipboard() {
