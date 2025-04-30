@@ -21,6 +21,9 @@
     #chooseSectionTitle, #sectionSelector {
       display: none;
     }
+    .saveBtn, .editBtn {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -44,7 +47,7 @@
   <textarea id="codePreview" rows="10" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;"></textarea><br><br>
 
   <button onclick="addGame()">Insert Code into HTML</button><br><br>
-  <button onclick="downloadModifiedFile()">Download Modified File</button>
+  <button onclick="downloadModifiedFile()">Download Modified File</button><br><br>
 
   <script>
     let originalContent = '';
@@ -85,50 +88,6 @@
       reader.readAsText(file);
     });
 
-    function displaySectionGames() {
-      const sectionId = document.getElementById('sectionSelector').value;
-      const gamesContainer = document.getElementById('gamesContainer');
-      gamesContainer.innerHTML = '';
-
-      const sectionRegex = new RegExp(
-        `<div class="carousel-section" id="${sectionId}".*?>([\\s\\S]*?)</div>`, 'i'
-      );
-      const sectionMatch = originalContent.match(sectionRegex);
-      if (sectionMatch) {
-        const sectionContent = sectionMatch[1];
-        const gameMatches = [...sectionContent.matchAll(/<button class="btn" onClick="installPkg'(.*?)'">.*?<img src="(.*?)".*?data-tooltip="(.*?)"/g)];
-        
-        sectionGames[sectionId] = [];
-
-        gameMatches.forEach((match, index) => {
-          const gameLink = match[1];
-          const gameImage = match[2];
-          const gameName = match[3];
-
-          sectionGames[sectionId].push({ gameLink, gameImage, gameName });
-
-          const gameDiv = document.createElement('div');
-          gameDiv.classList.add('game-container');
-          gameDiv.innerHTML = `
-            <fieldset>
-              <legend>Game ${index + 1}</legend>
-              <label>Game Link:</label> <input type="text" class="gameLink" value="${gameLink}"><br>
-              <label>Game Image Link:</label> <input type="text" class="gameImage" value="${gameImage}"><br>
-              <label>Game Name:</label> <input type="text" class="gameName" value="${gameName}"><br>
-              <button onclick="deleteGame(${index})">Delete Game</button>
-            </fieldset>
-          `;
-          gamesContainer.appendChild(gameDiv);
-        });
-      }
-    }
-
-    function deleteGame(index) {
-      const sectionId = document.getElementById('sectionSelector').value;
-      sectionGames[sectionId].splice(index, 1);
-      displaySectionGames();
-    }
-
     function addGameInput() {
       const container = document.getElementById('gameInputsContainer');
       const sectionOptions = sectionIds.map(id => `<option value="${id}">${id}</option>`).join('');
@@ -143,24 +102,46 @@
           <label>Game Link:</label> <input type="text" class="gameLink"><br>
           <label>Game Image Link:</label> <input type="text" class="gameImage"><br>
           <label>Game Name:</label> <input type="text" class="gameName"><br>
+          <button class="saveBtn" onclick="saveGame(this)">Save</button>
+          <button class="editBtn" onclick="editGame(this)" disabled>Edit</button>
           <button onclick="this.parentElement.remove()">Remove</button>
         </fieldset>
       `;
       container.appendChild(gameDiv);
     }
 
-    function generateCode() {
-      const sections = document.querySelectorAll('.newGameSection');
-      const links = document.querySelectorAll('.gameLink');
-      const images = document.querySelectorAll('.gameImage');
-      const names = document.querySelectorAll('.gameName');
+    function editGame(button) {
+      const gameDiv = button.closest('fieldset');
+      const inputs = gameDiv.querySelectorAll('input, select');
+      inputs.forEach(input => input.disabled = false);
 
+      gameDiv.querySelector('.saveBtn').disabled = false;
+      button.disabled = true;
+    }
+
+    function saveGame(button) {
+      const gameDiv = button.closest('fieldset');
+      const inputs = gameDiv.querySelectorAll('input, select');
+      inputs.forEach(input => input.disabled = true);
+
+      button.disabled = true;
+      gameDiv.querySelector('.editBtn').disabled = false;
+      gameDiv.querySelector('.editBtn').textContent = 'Editing';
+      gameDiv.style.opacity = '0.6';
+    }
+
+    function generateCode() {
+      const games = document.querySelectorAll('#gameInputsContainer fieldset');
       let codes = [];
-      for (let i = 0; i < links.length; i++) {
-        const section = sections[i] ? sections[i].value : '';
-        const link = links[i].value;
-        const image = images[i].value;
-        const name = names[i].value;
+
+      games.forEach(fieldset => {
+        const saveBtn = fieldset.querySelector('.saveBtn');
+        if (!saveBtn.disabled) return; // تجاهل غير المحفوظة
+
+        const section = fieldset.querySelector('.newGameSection').value;
+        const link = fieldset.querySelector('.gameLink').value;
+        const image = fieldset.querySelector('.gameImage').value;
+        const name = fieldset.querySelector('.gameName').value;
 
         const buttonHTML = 
 `<!-- Section: ${section} -->
@@ -168,8 +149,9 @@
 <button class="btn" onClick="installPkg('${link}')">
   <img src="${image}" alt="Install App" class="btn-img" data-tooltip="${name}">
 </button>`;
+
         codes.push(buttonHTML);
-      }
+      });
 
       document.getElementById('codePreview').value = codes.join("\n\n");
     }
