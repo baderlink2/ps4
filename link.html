@@ -130,6 +130,18 @@
              margin-top: 10px;
         }
 
+    .reorder-buttons {
+        display: flex;
+        flex-direction: column;
+        margin-left: 15px; /* Space between game details and reorder buttons */
+    }
+    .reorder-buttons button {
+        margin-bottom: 5px;
+        padding: 5px 10px;
+        font-size: 12px;
+        background-color: #ddd;
+        color: #333;
+    }
 
   </style>
 </head>
@@ -165,25 +177,124 @@
   <script>
     let originalContent = '';
     let sectionIds = [];
-    let isEnglish = true;
+    let isEnglish = true; // Default language is English
     let gamesData = {}; // Stores parsed game data organized by section ID
+
+    const languageStrings = {
+        'en': {
+            'selectFileTitle': '1. Select an HTML File',
+            'chooseSectionTitle': '2. Choose a Section to Edit',
+            'addGameTitle': 'Add New Game',
+            'generatedCodeTitle': 'Final HTML Code:',
+            'languageToggle': 'Switch to Arabic',
+            'newGamePlaceholderName': 'New Game',
+            'gameLinkLabel': 'Game Link:',
+            'gameImageLabel': 'Game Image Link:',
+            'gameNameLabel': 'Game Name:',
+            'saveButton': 'Save',
+            'editButton': 'Edit',
+            'removeButton': 'Remove',
+            'addToImageListButton': 'Add to List',
+            'removeFieldsButton': 'Remove Fields',
+            'pleaseFillNewGameDetails': 'Please fill in all new game details.',
+            'newGameAdded': (name, section) => `New game "${name}" added to section "${section}".`,
+             'confirmRemoveGame': 'Are you sure you want to remove this game?',
+             'confirmRemoveSection': 'Are you sure you want to remove this section and all its games?',
+             'sectionRemoved': (sectionId) => `Section "${sectionId}" removed.`,
+             'generateHtmlFirst': 'Generate the HTML code first.',
+             'moveUpButton': 'Move Up',
+             'moveDownButton': 'Move Down',
+             'addSectionButton': 'Add New Section Fields',
+             'addSectionToListButton': 'Add Section to List',
+             'removeSectionFieldsButton': 'Remove Fields',
+             'newSectionPlaceholderName': 'New Section',
+             'sectionIdLabel': 'Section ID:',
+             'pleaseFillNewSectionDetails': 'Please fill in the new section ID.',
+             'newSectionAdded': (sectionId) => `New section "${sectionId}" added.`
+        },
+        'ar': {
+            'selectFileTitle': '1. اختر ملف HTML',
+            'chooseSectionTitle': '2. اختر القسم للتعديل',
+            'addGameTitle': 'إضافة لعبة جديدة',
+            'generatedCodeTitle': 'كود HTML النهائي:',
+            'languageToggle': 'التبديل إلى الإنجليزية',
+             'newGamePlaceholderName': 'لعبة جديدة',
+            'gameLinkLabel': 'رابط اللعبة:',
+            'gameImageLabel': 'رابط صورة اللعبة:',
+            'gameNameLabel': 'اسم اللعبة:',
+            'saveButton': 'حفظ',
+            'editButton': 'تعديل',
+            'removeButton': 'إزالة',
+            'addToImageListButton': 'إضافة إلى القائمة',
+            'removeFieldsButton': 'إزالة الحقول',
+            'pleaseFillNewGameDetails': 'يرجى تعبئة جميع تفاصيل اللعبة الجديدة.',
+            'newGameAdded': (name, section) => `تمت إضافة اللعبة "${name}" إلى القسم "${section}".`,
+            'confirmRemoveGame': 'هل أنت متأكد أنك تريد إزالة هذه اللعبة؟',
+            'confirmRemoveSection': 'هل أنت متأكد أنك تريد إزالة هذا القسم وجميع ألعابه؟',
+            'sectionRemoved': (sectionId) => `تمت إزالة القسم "${sectionId}".`,
+            'generateHtmlFirst': 'قم بتوليد كود HTML أولاً.',
+             'moveUpButton': 'تحريك للأعلى',
+             'moveDownButton': 'تحريك للأسفل',
+             'addSectionButton': 'إضافة حقول قسم جديد',
+             'addSectionToListButton': 'إضافة القسم إلى القائمة',
+             'removeSectionFieldsButton': 'إزالة الحقول',
+             'newSectionPlaceholderName': 'قسم جديد',
+             'sectionIdLabel': 'معرف القسم (ID):',
+             'pleaseFillNewSectionDetails': 'يرجى تعبئة معرف القسم الجديد.',
+             'newSectionAdded': (sectionId) => `تمت إضافة القسم "${sectionId}".`
+        }
+    };
+
+    function getLanguageString(key, ...args) {
+        const lang = isEnglish ? 'en' : 'ar';
+        const string = languageStrings[lang][key];
+        if (typeof string === 'function') {
+            return string(...args);
+        }
+        return string;
+    }
+
+    function updateUIStrings() {
+        document.getElementById('selectFileTitle').textContent = getLanguageString('selectFileTitle');
+        document.getElementById('chooseSectionTitle').textContent = getLanguageString('chooseSectionTitle');
+        document.getElementById('addGameTitle').textContent = getLanguageString('addGameTitle');
+        document.getElementById('generatedCodeTitle').textContent = getLanguageString('generatedCodeTitle');
+        document.getElementById('languageToggle').textContent = getLanguageString('languageToggle');
+
+         // Update text for dynamically added elements if they exist
+        document.querySelectorAll('.gameLinkLabel').forEach(el => el.textContent = getLanguageString('gameLinkLabel'));
+        document.querySelectorAll('.gameImageLabel').forEach(el => el.textContent = getLanguageString('gameImageLabel'));
+        document.querySelectorAll('.gameNameLabel').forEach(el => el.textContent = getLanguageString('gameNameLabel'));
+        document.querySelectorAll('.saveBtn').forEach(el => el.textContent = getLanguageString('saveButton'));
+        document.querySelectorAll('.editBtn').forEach(el => el.textContent = getLanguageString('editButton'));
+        document.querySelectorAll('.remove-item-btn').forEach(el => el.textContent = getLanguageString('removeButton'));
+        document.querySelectorAll('.addToImageListButton').forEach(el => el.textContent = getLanguageString('addToImageListButton'));
+        document.querySelectorAll('.removeFieldsButton').forEach(el => el.textContent = getLanguageString('removeFieldsButton'));
+        document.querySelectorAll('.moveUpBtn').forEach(el => el.textContent = getLanguageString('moveUpButton'));
+        document.querySelectorAll('.moveDownBtn').forEach(el => el.textContent = getLanguageString('moveDownButton'));
+
+         // Update legends for existing games based on current names
+         const gamesContainer = document.getElementById('gamesContainer');
+         gamesContainer.querySelectorAll('legend').forEach(legend => {
+             // This assumes the legend text was set to the game name initially
+              const gameName = legend.textContent; // Or find the input and get its value
+             legend.textContent = gameName || getLanguageString('newGamePlaceholderName');
+         });
+
+         // Update placeholder/default text for new game inputs if visible
+         const newGameInputsContainer = document.getElementById('newGameInputsContainer');
+         if (newGameInputsContainer.style.display !== 'none') {
+             newGameInputsContainer.querySelectorAll('legend').forEach(legend => {
+                 if (legend.textContent === 'New Game' || legend.textContent === 'لعبة جديدة') { // Check for both English and Arabic placeholders
+                     legend.textContent = getLanguageString('newGamePlaceholderName');
+                 }
+             });
+         }
+    }
 
     function toggleLanguage() {
       isEnglish = !isEnglish;
-      const languageElements = {
-        'selectFileTitle': ['1. Select an HTML File', '1. اختر ملف HTML'],
-        'chooseSectionTitle': ['2. Choose a Section to Edit', '2. اختر القسم للتعديل'],
-         'addGameTitle': ['Add New Game', 'إضافة لعبة جديدة'],
-        'generatedCodeTitle': ['Final HTML Code:', 'كود HTML النهائي:'],
-        'languageToggle': ['Switch to Arabic', 'التبديل إلى الإنجليزية']
-      };
-      Object.keys(languageElements).forEach(id => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.textContent = isEnglish ? languageElements[id][0] : languageElements[id][1];
-          }
-      });
-      document.getElementById('languageToggle').textContent = isEnglish ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية';
+      updateUIStrings();
     }
 
     document.getElementById('htmlFileInput').addEventListener('change', function () {
@@ -231,15 +342,19 @@
             }
         });
 
-        const selector = document.getElementById('sectionSelector');
-        selector.innerHTML = '';
-        sectionIds.forEach(id => {
-          const option = document.createElement('option');
-          option.value = id;
-          option.textContent = id;
-          selector.appendChild(option);
-        });
+        populateSectionSelector();
     }
+
+     function populateSectionSelector() {
+         const selector = document.getElementById('sectionSelector');
+         selector.innerHTML = '';
+         sectionIds.forEach(id => {
+           const option = document.createElement('option');
+           option.value = id;
+           option.textContent = id;
+           selector.appendChild(option);
+         });
+     }
 
     function displaySectionGames() {
         const selectedSectionId = document.getElementById('sectionSelector').value;
@@ -247,25 +362,28 @@
         gamesContainer.innerHTML = ''; // Clear previous games
 
         if (gamesData[selectedSectionId]) {
-            // Loop through games in reverse order to display new additions first (optional for display)
-            // However, the unshift in addNewGame handles the data order, display will reflect that when redisplayed
             gamesData[selectedSectionId].forEach((game, index) => {
                 const gameDiv = document.createElement('div');
                 gameDiv.classList.add('game-container');
+                gameDiv.setAttribute('data-index', index); // Add data attribute for reordering
                 gameDiv.innerHTML = `
                     <fieldset>
-                        <legend>${game.name || 'Unnamed Game'}</legend>
+                        <legend>${game.name || getLanguageString('newGamePlaceholderName')}</legend>
                         <div class="game-details">
-                            <label>Game Link:</label> <input type="text" class="gameLink" value="${game.link}" disabled><br>
-                            <label>Game Image Link:</label> <input type="text" class="gameImage" value="${game.image}" disabled><br>
-                            <label>Game Name:</label> <input type="text" class="gameName" value="${game.name}" disabled><br>
+                            <label class="gameLinkLabel">${getLanguageString('gameLinkLabel')}</label> <input type="text" class="gameLink" value="${game.link}" disabled><br>
+                            <label class="gameImageLabel">${getLanguageString('gameImageLabel')}</label> <input type="text" class="gameImage" value="${game.image}" disabled><br>
+                            <label class="gameNameLabel">${getLanguageString('gameNameLabel')}</label> <input type="text" class="gameName" value="${game.name}" disabled><br>
                             <div class="buttons">
-                                <button class="saveBtn" onclick="saveExistingGame(this, '${selectedSectionId}', ${index})" disabled>Save</button>
-                                <button class="editBtn" onclick="editExistingGame(this)">Edit</button>
-                                <button class="remove-item-btn" onclick="removeExistingGame('${selectedSectionId}', ${index}, this)">Remove</button>
+                                <button class="saveBtn" onclick="saveExistingGame(this, '${selectedSectionId}', ${index})" disabled>${getLanguageString('saveButton')}</button>
+                                <button class="editBtn" onclick="editExistingGame(this)">${getLanguageString('editButton')}</button>
+                                <button class="remove-item-btn" onclick="removeExistingGame('${selectedSectionId}', ${index}, this)">${getLanguageString('removeButton')}</button>
                             </div>
                         </div>
                         <img src="${game.image}" alt="${game.name || 'Game Image'}" class="game-image-preview">
+                        <div class="reorder-buttons">
+                            <button class="moveUpBtn" onclick="moveGameUp('${selectedSectionId}', ${index})">${getLanguageString('moveUpButton')}</button>
+                            <button class="moveDownBtn" onclick="moveGameDown('${selectedSectionId}', ${index})">${getLanguageString('moveDownButton')}</button>
+                        </div>
                     </fieldset>
                 `;
                 gamesContainer.appendChild(gameDiv);
@@ -278,6 +396,7 @@
                 });
             });
         }
+         updateUIStrings(); // Ensure buttons within newly displayed games are translated
     }
 
     function editExistingGame(button) {
@@ -304,15 +423,30 @@
       gamesData[sectionId][index].name = gameDiv.querySelector('.gameName').value;
 
        // Update legend with new name
-       gameDiv.querySelector('legend').textContent = gamesData[sectionId][index].name || 'Unnamed Game';
+       gameDiv.querySelector('legend').textContent = gamesData[sectionId][index].name || getLanguageString('newGamePlaceholderName');
     }
 
     function removeExistingGame(sectionId, index, button) {
-        if (confirm('Are you sure you want to remove this game?')) {
+        if (confirm(getLanguageString('confirmRemoveGame'))) {
             gamesData[sectionId].splice(index, 1);
-            button.closest('.game-container').remove(); // Remove the game-container div
-            // Re-display games to update indices and UI correctly after removal
+            // No need to remove the div directly, displaySectionGames will refresh the list
             displaySectionGames();
+        }
+    }
+
+    function moveGameUp(sectionId, index) {
+        if (index > 0) {
+            const gameToMove = gamesData[sectionId].splice(index, 1)[0];
+            gamesData[sectionId].splice(index - 1, 0, gameToMove);
+            displaySectionGames(); // Re-render the list
+        }
+    }
+
+    function moveGameDown(sectionId, index) {
+        if (index < gamesData[sectionId].length - 1) {
+            const gameToMove = gamesData[sectionId].splice(index, 1)[0];
+            gamesData[sectionId].splice(index + 1, 0, gameToMove);
+            displaySectionGames(); // Re-render the list
         }
     }
 
@@ -326,16 +460,16 @@
       gameDiv.classList.add('game-container');
       gameDiv.innerHTML = `
         <fieldset>
-          <legend>New Game</legend>
+          <legend>${getLanguageString('newGamePlaceholderName')}</legend>
           <div class="game-details">
               <label>Section:</label>
               <select class="newGameSection">${sectionOptions}</select><br>
-              <label>Game Link:</label> <input type="text" class="newGameLink"><br>
-              <label>Game Image Link:</label> <input type="text" class="newGameImage"><br>
-              <label>Game Name:</label> <input type="text" class="newGameName"><br>
+              <label class="gameLinkLabel">${getLanguageString('gameLinkLabel')}</label> <input type="text" class="newGameLink"><br>
+              <label class="gameImageLabel">${getLanguageString('gameImageLabel')}</label> <input type="text" class="newGameImage"><br>
+              <label class="gameNameLabel">${getLanguageString('gameNameLabel')}</label> <input type="text" class="newGameName"><br>
               <div class="buttons">
-                  <button onclick="addNewGame(this)">Add to List</button>
-                  <button onclick="this.closest('.game-container').remove()">Remove Fields</button>
+                  <button class="addToImageListButton" onclick="addNewGame(this)">${getLanguageString('addToImageListButton')}</button>
+                  <button class="removeFieldsButton" onclick="this.closest('.game-container').remove()">${getLanguageString('removeFieldsButton')}</button>
               </div>
           </div>
           <img src="" alt="New Game Image" class="game-image-preview">
@@ -355,6 +489,7 @@
         imgInput.addEventListener('input', () => {
             imgPreview.src = imgInput.value;
         });
+         updateUIStrings(); // Translate the newly added input fields
     }
 
     function addNewGame(button) {
@@ -365,7 +500,7 @@
          const name = gameDiv.querySelector('.newGameName').value;
 
         if (!link || !image || !name) {
-            alert("Please fill in all new game details.");
+            alert(getLanguageString('pleaseFillNewGameDetails'));
             return;
         }
 
@@ -375,7 +510,7 @@
          }
          gamesData[section].unshift({ link, image, name }); // Use unshift here
 
-         alert(`New game "${name}" added to section "${section}".`);
+         alert(getLanguageString('newGameAdded', name, section));
          button.closest('.game-container').remove(); // Remove the input fields for this new game
 
          // Re-display games if the current section is the one we added to
@@ -412,9 +547,6 @@
 
                 // Build new button HTML for this section based on the order in gamesData
                 let newButtonsHtml = '';
-                // gamesData[sectionId].forEach(game => { // Original loop
-                // The order is already correct in gamesData due to unshift/splice
-
                 gamesData[sectionId].forEach(game => {
                     const buttonHTML = `
 <button class="btn" onClick="installPkg('${game.link}')">
@@ -425,6 +557,10 @@
 
                 // Append the new buttons
                 sectionElement.innerHTML += newButtonsHtml;
+            } else {
+                // Handle case where a section was added but didn't exist in the original HTML
+                // We need to decide how to add new sections. For now, we'll ignore sections not in original.
+                console.warn(`Section with ID "${sectionId}" not found in original HTML. Skipping code generation for this section.`);
             }
         }
 
@@ -491,7 +627,7 @@
     function downloadModifiedFile() {
       const modifiedHtml = document.getElementById('outputHtml').value;
       if (!modifiedHtml) {
-          alert("Generate the HTML code first.");
+          alert(getLanguageString('generateHtmlFirst'));
           return;
       }
       const blob = new Blob([modifiedHtml], { type: "text/html" });
@@ -502,7 +638,7 @@
     }
 
     // Initialize language on load
-    toggleLanguage();
+    updateUIStrings();
 
   </script>
 </body>
