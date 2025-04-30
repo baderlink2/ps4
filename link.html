@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Add Game to HTML</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Content Editor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+      color: #333;
     }
     .btn {
       cursor: pointer;
@@ -14,16 +18,119 @@
       margin-bottom: 10px;
       padding: 10px;
       border: 1px solid #aaa;
+      background-color: #fff;
+      border-radius: 5px;
+    }
+    legend {
+        font-weight: bold;
+        color: #555;
     }
     .game-container {
       margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #eee;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      display: flex; /* Use flexbox for layout */
+      align-items: flex-start; /* Align items to the top */
     }
-    #chooseSectionTitle, #sectionSelector {
-      display: none;
+    .game-details {
+        flex-grow: 1; /* Allow details to take up remaining space */
+        margin-right: 15px; /* Space between details and image */
     }
-    .saveBtn, .editBtn {
-      margin-top: 10px;
+    .game-image-preview {
+        width: 80px; /* Small size for the image preview */
+        height: 80px;
+        object-fit: cover; /* Crop image to fit without distortion */
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        background-color: #eee; /* Placeholder background */
     }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], select {
+      width: calc(100% - 22px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+     .buttons button {
+      padding: 8px 15px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-section-btn {
+      background-color: #5cb85c;
+      color: white;
+    }
+    .add-item-btn {
+        background-color: #5bc0de;
+        color: white;
+    }
+    .remove-item-btn {
+        background-color: #d9534f;
+        color: white;
+    }
+     .remove-section-btn {
+        background-color: #f0ad4e;
+        color: white;
+    }
+    .generate-html-btn, .insert-code-btn, .download-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #0275d8;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    #outputHtml {
+        width: 100%;
+        height: 300px;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        font-family: monospace;
+        font-size: 14px;
+    }
+     .editBtn, .saveBtn {
+        padding: 5px 10px;
+     }
+     /* Style for the new game input container */
+     #newGameInputsContainer fieldset {
+         display: flex;
+         flex-wrap: wrap; /* Allow items to wrap */
+         align-items: flex-start;
+     }
+      #newGameInputsContainer fieldset .game-details {
+          flex-basis: 70%; /* Adjust width for details */
+          margin-right: 15px;
+      }
+       #newGameInputsContainer fieldset .game-image-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+             border: 1px solid #ccc;
+             background-color: #eee;
+       }
+        #newGameInputsContainer fieldset .buttons {
+             width: 100%; /* Buttons take full width */
+             margin-top: 10px;
+        }
+
+
   </style>
 </head>
 <body>
@@ -32,40 +139,49 @@
   <h2 id="selectFileTitle">1. Select an HTML File</h2>
   <input type="file" id="htmlFileInput" accept=".html"><br><br>
 
-  <h2 id="chooseSectionTitle">2. Choose a Section</h2>
-  <select id="sectionSelector" onchange="displaySectionGames()"></select><br><br>
+  <div id="sectionSelectionArea" style="display: none;">
+      <h2 id="chooseSectionTitle">2. Choose a Section to Edit</h2>
+      <select id="sectionSelector" onchange="displaySectionGames()"></select><br><br>
+  </div>
 
-  <div id="gamesContainer"></div>
 
-  <h2 id="gameDetailsTitle">3. Enter Game Details</h2>
-  <div id="gameInputsContainer"></div>
-  <button onclick="addGameInput()">Add Game</button><br><br>
+  <div id="gamesContainer">
+      <!-- Games from the selected section will be displayed here -->
+  </div>
 
-  <button onclick="generateCode()">Generate & Edit Code</button><br><br>
+  <h2 id="addGameTitle" style="display: none;">Add New Game</h2>
+  <div id="newGameInputsContainer" style="display: none;">
+      <button onclick="addNewGameInput()">Add New Game Fields</button><br><br>
+  </div>
 
-  <h3 id="generatedCodeTitle">Generated Code (you can edit before inserting):</h3>
-  <textarea id="codePreview" rows="10" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;"></textarea><br><br>
 
-  <button onclick="addGame()">Insert Code into HTML</button><br><br>
-  <button onclick="downloadModifiedFile()">Download Modified File</button><br><br>
+  <button class="generate-html-btn" onclick="generateCode()">Generate Final HTML Code</button><br><br>
+
+  <h3 id="generatedCodeTitle">Final HTML Code:</h3>
+  <textarea id="outputHtml" rows="10" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;" readonly></textarea><br><br>
+
+  <button class="download-btn" onclick="downloadModifiedFile()">Download Modified File</button><br><br>
 
   <script>
     let originalContent = '';
     let sectionIds = [];
     let isEnglish = true;
-    let sectionGames = {};
+    let gamesData = {}; // Stores parsed game data organized by section ID
 
     function toggleLanguage() {
       isEnglish = !isEnglish;
       const languageElements = {
         'selectFileTitle': ['1. Select an HTML File', '1. اختر ملف HTML'],
-        'chooseSectionTitle': ['2. Choose a Section', '2. اختر القسم'],
-        'gameDetailsTitle': ['3. Enter Game Details', '3. أدخل تفاصيل اللعبة'],
-        'generatedCodeTitle': ['Generated Code (you can edit before inserting):', 'الكود المولد (يمكنك تعديله قبل الإدراج):'],
+        'chooseSectionTitle': ['2. Choose a Section to Edit', '2. اختر القسم للتعديل'],
+         'addGameTitle': ['Add New Game', 'إضافة لعبة جديدة'],
+        'generatedCodeTitle': ['Final HTML Code:', 'كود HTML النهائي:'],
         'languageToggle': ['Switch to Arabic', 'التبديل إلى الإنجليزية']
       };
       Object.keys(languageElements).forEach(id => {
-        document.getElementById(id).textContent = isEnglish ? languageElements[id][0] : languageElements[id][1];
+          const element = document.getElementById(id);
+          if (element) {
+            element.textContent = isEnglish ? languageElements[id][0] : languageElements[id][1];
+          }
       });
       document.getElementById('languageToggle').textContent = isEnglish ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية';
     }
@@ -75,7 +191,46 @@
       const reader = new FileReader();
       reader.onload = function (e) {
         originalContent = e.target.result;
-        sectionIds = [...originalContent.matchAll(/<div class="carousel-section" id="(.*?)"/g)].map(m => m[1]);
+        parseHtmlContent(); // Parse and populate sections and games
+
+        // Display relevant sections after file load
+        document.getElementById('sectionSelectionArea').style.display = 'block';
+        document.getElementById('addGameTitle').style.display = 'block';
+        document.getElementById('newGameInputsContainer').style.display = 'block';
+
+        // Trigger display of games for the first section by default
+        displaySectionGames();
+      };
+      reader.readAsText(file);
+    });
+
+    function parseHtmlContent() {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(originalContent, 'text/html');
+
+        // Extract section IDs and populate the selector
+        sectionIds = [];
+        gamesData = {};
+        const sections = doc.querySelectorAll('.carousel-section');
+        sections.forEach(section => {
+            const sectionId = section.id;
+            if (sectionId) {
+                sectionIds.push(sectionId);
+                gamesData[sectionId] = []; // Initialize array for games in this section
+
+                // Extract game details from buttons within this section
+                const buttons = section.querySelectorAll('.btn');
+                buttons.forEach(button => {
+                    const linkMatch = button.getAttribute('onClick').match(/installPkg\('([^']*)'\)/);
+                    const link = linkMatch ? linkMatch[1] : '';
+                    const imgElement = button.querySelector('.btn-img');
+                    const image = imgElement ? imgElement.src : '';
+                    const name = imgElement ? imgElement.getAttribute('data-tooltip') : '';
+                    gamesData[sectionId].push({ link, image, name });
+                });
+            }
+        });
+
         const selector = document.getElementById('sectionSelector');
         selector.innerHTML = '';
         sectionIds.forEach(id => {
@@ -84,118 +239,271 @@
           option.textContent = id;
           selector.appendChild(option);
         });
-      };
-      reader.readAsText(file);
-    });
-
-    function addGameInput() {
-      const container = document.getElementById('gameInputsContainer');
-      const sectionOptions = sectionIds.map(id => `<option value="${id}">${id}</option>`).join('');
-
-      const gameDiv = document.createElement('div');
-      gameDiv.classList.add('game-container');
-      gameDiv.innerHTML = `
-        <fieldset>
-          <legend>New Game</legend>
-          <label>Section:</label> 
-          <select class="newGameSection">${sectionOptions}</select><br>
-          <label>Game Link:</label> <input type="text" class="gameLink"><br>
-          <label>Game Image Link:</label> <input type="text" class="gameImage"><br>
-          <label>Game Name:</label> <input type="text" class="gameName"><br>
-          <button class="saveBtn" onclick="saveGame(this)">Save</button>
-          <button class="editBtn" onclick="editGame(this)" disabled>Edit</button>
-          <button onclick="this.parentElement.remove()">Remove</button>
-        </fieldset>
-      `;
-      container.appendChild(gameDiv);
     }
 
-    function editGame(button) {
+    function displaySectionGames() {
+        const selectedSectionId = document.getElementById('sectionSelector').value;
+        const gamesContainer = document.getElementById('gamesContainer');
+        gamesContainer.innerHTML = ''; // Clear previous games
+
+        if (gamesData[selectedSectionId]) {
+            // Loop through games in reverse order to display new additions first (optional for display)
+            // However, the unshift in addNewGame handles the data order, display will reflect that when redisplayed
+            gamesData[selectedSectionId].forEach((game, index) => {
+                const gameDiv = document.createElement('div');
+                gameDiv.classList.add('game-container');
+                gameDiv.innerHTML = `
+                    <fieldset>
+                        <legend>${game.name || 'Unnamed Game'}</legend>
+                        <div class="game-details">
+                            <label>Game Link:</label> <input type="text" class="gameLink" value="${game.link}" disabled><br>
+                            <label>Game Image Link:</label> <input type="text" class="gameImage" value="${game.image}" disabled><br>
+                            <label>Game Name:</label> <input type="text" class="gameName" value="${game.name}" disabled><br>
+                            <div class="buttons">
+                                <button class="saveBtn" onclick="saveExistingGame(this, '${selectedSectionId}', ${index})" disabled>Save</button>
+                                <button class="editBtn" onclick="editExistingGame(this)">Edit</button>
+                                <button class="remove-item-btn" onclick="removeExistingGame('${selectedSectionId}', ${index}, this)">Remove</button>
+                            </div>
+                        </div>
+                        <img src="${game.image}" alt="${game.name || 'Game Image'}" class="game-image-preview">
+                    </fieldset>
+                `;
+                gamesContainer.appendChild(gameDiv);
+
+                // Add event listener to image link input to update preview
+                const imgInput = gameDiv.querySelector('.gameImage');
+                const imgPreview = gameDiv.querySelector('.game-image-preview');
+                imgInput.addEventListener('input', () => {
+                    imgPreview.src = imgInput.value;
+                });
+            });
+        }
+    }
+
+    function editExistingGame(button) {
       const gameDiv = button.closest('fieldset');
-      const inputs = gameDiv.querySelectorAll('input, select');
+      const inputs = gameDiv.querySelectorAll('.game-details input'); // Select inputs within game-details
       inputs.forEach(input => input.disabled = false);
 
       gameDiv.querySelector('.saveBtn').disabled = false;
       button.disabled = true;
     }
 
-    function saveGame(button) {
+    function saveExistingGame(button, sectionId, index) {
       const gameDiv = button.closest('fieldset');
-      const inputs = gameDiv.querySelectorAll('input, select');
+      const inputs = gameDiv.querySelectorAll('.game-details input'); // Select inputs within game-details
       inputs.forEach(input => input.disabled = true);
 
       button.disabled = true;
-      gameDiv.querySelector('.editBtn').disabled = false;
-      gameDiv.querySelector('.editBtn').textContent = 'Editing';
-      gameDiv.style.opacity = '0.6';
+      const editBtn = gameDiv.querySelector('.editBtn');
+      editBtn.disabled = false;
+
+      // Update gamesData array
+      gamesData[sectionId][index].link = gameDiv.querySelector('.gameLink').value;
+      gamesData[sectionId][index].image = gameDiv.querySelector('.gameImage').value;
+      gamesData[sectionId][index].name = gameDiv.querySelector('.gameName').value;
+
+       // Update legend with new name
+       gameDiv.querySelector('legend').textContent = gamesData[sectionId][index].name || 'Unnamed Game';
     }
+
+    function removeExistingGame(sectionId, index, button) {
+        if (confirm('Are you sure you want to remove this game?')) {
+            gamesData[sectionId].splice(index, 1);
+            button.closest('.game-container').remove(); // Remove the game-container div
+            // Re-display games to update indices and UI correctly after removal
+            displaySectionGames();
+        }
+    }
+
+    function addNewGameInput() {
+      const container = document.getElementById('newGameInputsContainer');
+       const sectionOptions = sectionIds.map(id => `<option value="${id}">${id}</option>`).join('');
+       const selectedSectionId = document.getElementById('sectionSelector').value; // Default to current selected section
+
+
+      const gameDiv = document.createElement('div');
+      gameDiv.classList.add('game-container');
+      gameDiv.innerHTML = `
+        <fieldset>
+          <legend>New Game</legend>
+          <div class="game-details">
+              <label>Section:</label>
+              <select class="newGameSection">${sectionOptions}</select><br>
+              <label>Game Link:</label> <input type="text" class="newGameLink"><br>
+              <label>Game Image Link:</label> <input type="text" class="newGameImage"><br>
+              <label>Game Name:</label> <input type="text" class="newGameName"><br>
+              <div class="buttons">
+                  <button onclick="addNewGame(this)">Add to List</button>
+                  <button onclick="this.closest('.game-container').remove()">Remove Fields</button>
+              </div>
+          </div>
+          <img src="" alt="New Game Image" class="game-image-preview">
+        </fieldset>
+      `;
+       // Set the default selected section
+       const sectionSelectElement = gameDiv.querySelector('.newGameSection');
+       if (sectionSelectElement) {
+           sectionSelectElement.value = selectedSectionId;
+       }
+
+        container.appendChild(gameDiv);
+
+        // Add event listener to the new image link input to update preview
+        const imgInput = gameDiv.querySelector('.newGameImage');
+        const imgPreview = gameDiv.querySelector('.game-image-preview');
+        imgInput.addEventListener('input', () => {
+            imgPreview.src = imgInput.value;
+        });
+    }
+
+    function addNewGame(button) {
+         const gameDiv = button.closest('fieldset');
+         const section = gameDiv.querySelector('.newGameSection').value;
+         const link = gameDiv.querySelector('.newGameLink').value;
+         const image = gameDiv.querySelector('.newGameImage').value;
+         const name = gameDiv.querySelector('.newGameName').value;
+
+        if (!link || !image || !name) {
+            alert("Please fill in all new game details.");
+            return;
+        }
+
+         // Add the new game to our internal data structure AT THE BEGINNING
+         if (!gamesData[section]) {
+             gamesData[section] = []; // Should not happen if sections are parsed correctly, but as a fallback
+         }
+         gamesData[section].unshift({ link, image, name }); // Use unshift here
+
+         alert(`New game "${name}" added to section "${section}".`);
+         button.closest('.game-container').remove(); // Remove the input fields for this new game
+
+         // Re-display games if the current section is the one we added to
+         if (document.getElementById('sectionSelector').value === section) {
+             displaySectionGames();
+         }
+    }
+
 
     function generateCode() {
-      const games = document.querySelectorAll('#gameInputsContainer fieldset');
-      let codes = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(originalContent, 'text/html');
 
-      games.forEach(fieldset => {
-        const saveBtn = fieldset.querySelector('.saveBtn');
-        if (!saveBtn.disabled) return; // تجاهل غير المحفوظة
+        // Update the content of each carousel section based on gamesData
+        for (const sectionId in gamesData) {
+            const sectionElement = doc.getElementById(sectionId);
+            if (sectionElement) {
+                // Capture existing comments before clearing
+                let comments = '';
+                 const nodes = sectionElement.childNodes;
+                 for (let i = 0; i < nodes.length; i++) {
+                     if (nodes[i].nodeType === Node.COMMENT_NODE) {
+                         // Reconstruct comment with delimiters if they were trimmed by parser
+                         comments += `<!--${nodes[i].textContent}-->\n`;
+                     }
+                 }
 
-        const section = fieldset.querySelector('.newGameSection').value;
-        const link = fieldset.querySelector('.gameLink').value;
-        const image = fieldset.querySelector('.gameImage').value;
-        const name = fieldset.querySelector('.gameName').value;
 
-        const buttonHTML = 
-`<!-- Section: ${section} -->
-<!-- ${name} -->
-<button class="btn" onClick="installPkg('${link}')">
-  <img src="${image}" alt="Install App" class="btn-img" data-tooltip="${name}">
+                // Clear existing content (including buttons)
+                sectionElement.innerHTML = '';
+
+                // Add the preserved comments back
+                sectionElement.innerHTML += comments;
+
+                // Build new button HTML for this section based on the order in gamesData
+                let newButtonsHtml = '';
+                // gamesData[sectionId].forEach(game => { // Original loop
+                // The order is already correct in gamesData due to unshift/splice
+
+                gamesData[sectionId].forEach(game => {
+                    const buttonHTML = `
+<button class="btn" onClick="installPkg('${game.link}')">
+  <img src="${game.image}" alt="Install App" class="btn-img" data-tooltip="${game.name}">
 </button>`;
+                    newButtonsHtml += buttonHTML + '\n'; // Add newline for readability
+                });
 
-        codes.push(buttonHTML);
-      });
-
-      document.getElementById('codePreview').value = codes.join("\n\n");
-    }
-
-    function addGame() {
-      const codeLines = document.getElementById('codePreview').value.split('\n');
-      let currentSection = '';
-      let currentCode = [];
-
-      for (let line of codeLines) {
-        const sectionMatch = line.match(/<!-- Section: (.+?) -->/);
-        if (sectionMatch) {
-          if (currentSection && currentCode.length > 0) {
-            insertIntoSection(currentSection, currentCode.join('\n'));
-            currentCode = [];
-          }
-          currentSection = sectionMatch[1];
-        } else if (line.trim() !== '' || currentCode.length > 0) {
-          currentCode.push(line);
+                // Append the new buttons
+                sectionElement.innerHTML += newButtonsHtml;
+            }
         }
-      }
-      if (currentSection && currentCode.length > 0) {
-        insertIntoSection(currentSection, currentCode.join('\n'));
-      }
 
-      alert("Games added successfully!");
+        // Get the complete modified HTML
+        const modifiedHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        document.getElementById('outputHtml').value = formatHtml(modifiedHtml); // Optional: format the output
     }
 
-    function insertIntoSection(sectionId, customCode) {
-      const sectionRegex = new RegExp(
-        `(<div class="carousel-section" id="${sectionId}".*?>)([\\s\\S]*?)(</div>)`, 'i'
-      );
-      originalContent = originalContent.replace(sectionRegex, (match, start, content, end) => {
-        return `${start}\n${customCode}\n${content.trim()}\n${end}`;
-      });
+    // Basic HTML formatting (can be improved)
+    function formatHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html.trim();
+        let indent = 0;
+        const indentSize = 2; // Number of spaces for each indent level
+        const newline = '\n';
+        const result = [];
+        const indentChars = ' '.repeat(indentSize);
+
+        function processNode(node, currentIndent) {
+            const nodeName = node.nodeName.toLowerCase();
+            const nodeType = node.nodeType;
+
+            if (nodeType === Node.TEXT_NODE) {
+                 const text = node.textContent.trim();
+                 if (text) {
+                     result.push(indentChars.repeat(currentIndent) + text + newline);
+                 }
+            } else if (nodeType === Node.ELEMENT_NODE) {
+                let attributes = '';
+                for (let i = 0; i < node.attributes.length; i++) {
+                    attributes += ` ${node.attributes[i].name}="${node.attributes[i].value}"`;
+                }
+
+                // Special handling for elements whose inner content should not be indented
+                const rawContentElements = ['textarea', 'script', 'style'];
+                 if (rawContentElements.includes(nodeName)) {
+                     result.push(indentChars.repeat(currentIndent) + `<${nodeName}${attributes}>` + node.innerHTML + `</${nodeName}>` + newline);
+                 } else if (nodeName === 'img' || nodeName === 'input' || nodeName === 'br' || nodeName === 'hr' || node.childNodes.length === 0) {
+                     // Self-closing or empty elements
+                      result.push(indentChars.repeat(currentIndent) + `<${nodeName}${attributes}>` + newline);
+                 }
+                 else {
+                     result.push(indentChars.repeat(currentIndent) + `<${nodeName}${attributes}>` + newline);
+                     for (let i = 0; i < node.childNodes.length; i++) {
+                         processNode(node.childNodes[i], currentIndent + 1);
+                     }
+                     result.push(indentChars.repeat(currentIndent) + `</${nodeName}>` + newline);
+                 }
+            } else if (nodeType === Node.COMMENT_NODE) {
+                 const comment = node.textContent;
+                 // Preserve original comment formatting as much as possible
+                 result.push(indentChars.repeat(currentIndent) + `<!--${comment.trim()}-->` + newline);
+            }
+        }
+
+         for (let i = 0; i < div.childNodes.length; i++) {
+             processNode(div.childNodes[i], indent);
+         }
+
+        return result.join('');
     }
+
 
     function downloadModifiedFile() {
-      const blob = new Blob([originalContent], { type: "text/html" });
+      const modifiedHtml = document.getElementById('outputHtml').value;
+      if (!modifiedHtml) {
+          alert("Generate the HTML code first.");
+          return;
+      }
+      const blob = new Blob([modifiedHtml], { type: "text/html" });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = "modified.html";
+      a.download = "modified_store.html"; // Suggested filename
       a.click();
     }
+
+    // Initialize language on load
+    toggleLanguage();
+
   </script>
 </body>
 </html>
