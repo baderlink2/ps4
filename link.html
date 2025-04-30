@@ -1,69 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Game Button Generator</title>
+  <title>Add Game to HTML</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    textarea { width: 100%; height: 120px; }
-    input, button { width: 100%; padding: 10px; margin: 5px 0; }
-    .toggle { background: #f0f0f0; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .btn {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <button id="languageToggle" onclick="toggleLanguage()">Switch to Arabic</button><br><br>
 
-  <h2>Game Install Button Generator</h2>
+  <h2 id="selectFileTitle">1. Select an HTML File</h2>
+  <input type="file" id="htmlFileInput" accept=".html"><br><br>
 
-  <label>Game Link:</label>
-  <input type="text" id="gameLink" oninput="autoGenerate()">
+  <h2 id="chooseSectionTitle">2. Choose a Section</h2>
+  <select id="sectionSelector"></select><br><br>
 
-  <label>Image Link:</label>
-  <input type="text" id="gamePhoto" oninput="autoGenerate()">
+  <h2 id="gameDetailsTitle">3. Enter Game Details</h2>
+  <label for="gameLink" id="gameLinkTitle">Game Link:</label> <input type="text" id="gameLink"><br>
+  <label for="gameImage" id="gameImageTitle">Game Image Link:</label> <input type="text" id="gameImage"><br>
+  <label for="gameName" id="gameNameTitle">Game Name:</label> <input type="text" id="gameName"><br><br>
 
-  <label>Game Name:</label>
-  <input type="text" id="gameName" oninput="autoGenerate()">
+  <button onclick="generateCode()">Generate & Edit Code</button><br><br>
 
-  <button onclick="generateCode()">Generate Code</button>
-  <button class="toggle" onclick="toggleAuto()">Toggle Auto Generate: <span id="autoStatus">OFF</span></button>
+  <h3 id="generatedCodeTitle">Generated Code (you can edit before inserting):</h3>
+  <textarea id="codePreview" rows="6" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;"></textarea><br><br>
 
-  <h3>Output:</h3>
-  <textarea id="output" readonly></textarea>
-  <button onclick="copyToClipboard()">Copy</button>
+  <button onclick="addGame()">Insert Code into HTML</button><br><br>
+  <button onclick="downloadModifiedFile()">Download Modified File</button>
 
   <script>
-    let autoEnabled = false;
+    let originalContent = '';
+    let sectionIds = [];
+    let isEnglish = true; // Default language is English
+
+    // Toggle language between English and Arabic
+    function toggleLanguage() {
+      isEnglish = !isEnglish;
+      const languageElements = {
+        'selectFileTitle': ['1. Select an HTML File', '1. اختر ملف HTML'],
+        'chooseSectionTitle': ['2. Choose a Section', '2. اختر القسم'],
+        'gameDetailsTitle': ['3. Enter Game Details', '3. أدخل تفاصيل اللعبة'],
+        'gameLinkTitle': ['Game Link:', 'رابط اللعبة:'],
+        'gameImageTitle': ['Game Image Link:', 'رابط صورة اللعبة:'],
+        'gameNameTitle': ['Game Name:', 'اسم اللعبة:'],
+        'generatedCodeTitle': ['Generated Code (you can edit before inserting):', 'الكود المولد (يمكنك تعديله قبل الإدراج):'],
+        'languageToggle': ['Switch to Arabic', 'التبديل إلى الإنجليزية']
+      };
+
+      // Update text content based on language
+      Object.keys(languageElements).forEach(id => {
+        document.getElementById(id).textContent = isEnglish ? languageElements[id][0] : languageElements[id][1];
+      });
+
+      // Toggle button text between languages
+      document.getElementById('languageToggle').textContent = isEnglish ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية';
+    }
+
+    document.getElementById('htmlFileInput').addEventListener('change', function () {
+      const file = this.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        originalContent = e.target.result;
+        sectionIds = [...originalContent.matchAll(/<div class="carousel-section" id="(.*?)"/g)].map(m => m[1]);
+        const selector = document.getElementById('sectionSelector');
+        selector.innerHTML = '';
+        sectionIds.forEach(id => {
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = id;
+          selector.appendChild(option);
+        });
+      };
+      reader.readAsText(file);
+    });
 
     function generateCode() {
       const link = document.getElementById('gameLink').value;
-      const photo = document.getElementById('gamePhoto').value;
+      const image = document.getElementById('gameImage').value;
       const name = document.getElementById('gameName').value;
 
-      const html = `<button class="btn" onClick="installPkg('${link}')">
-  <img src="${photo}" alt="Install App 15" class="btn-img" data-tooltip="${name}">
+      const buttonHTML = 
+`<button class="btn" onClick="installPkg('${link}')">
+  <img src="${image}" alt="Install App" class="btn-img" data-tooltip="${name}">
 </button>`;
 
-      document.getElementById('output').value = html;
+      document.getElementById('codePreview').value = buttonHTML;
     }
 
-    function autoGenerate() {
-      if (autoEnabled) {
-        generateCode();
-      }
+    function addGame() {
+      const sectionId = document.getElementById('sectionSelector').value;
+      const customCode = document.getElementById('codePreview').value;
+
+      const sectionRegex = new RegExp(
+        `(<div class="carousel-section" id="${sectionId}".*?>)([\\s\\S]*?)(</div>)`, 'i'
+      );
+      originalContent = originalContent.replace(sectionRegex, (match, start, content, end) => {
+        return `${start}${content.trim()}\n${customCode}\n${end}`;
+      });
+
+      alert("Game added successfully!");
     }
 
-    function toggleAuto() {
-      autoEnabled = !autoEnabled;
-      document.getElementById('autoStatus').innerText = autoEnabled ? "ON" : "OFF";
-      if (autoEnabled) generateCode();
-    }
-
-    function copyToClipboard() {
-      const output = document.getElementById('output');
-      output.select();
-      document.execCommand('copy');
-      alert("Code copied to clipboard!");
+    function downloadModifiedFile() {
+      const blob = new Blob([originalContent], { type: "text/html" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "modified.html";
+      a.click();
     }
   </script>
-
 </body>
 </html>
