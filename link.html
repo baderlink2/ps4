@@ -10,6 +10,17 @@
     .btn {
       cursor: pointer;
     }
+    fieldset {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #aaa;
+    }
+    .game-container {
+      margin-top: 10px;
+    }
+    #chooseSectionTitle, #sectionSelector {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -19,17 +30,18 @@
   <input type="file" id="htmlFileInput" accept=".html"><br><br>
 
   <h2 id="chooseSectionTitle">2. Choose a Section</h2>
-  <select id="sectionSelector"></select><br><br>
+  <select id="sectionSelector" onchange="displaySectionGames()"></select><br><br>
+
+  <div id="gamesContainer"></div>
 
   <h2 id="gameDetailsTitle">3. Enter Game Details</h2>
-  <label for="gameLink" id="gameLinkTitle">Game Link:</label> <input type="text" id="gameLink"><br>
-  <label for="gameImage" id="gameImageTitle">Game Image Link:</label> <input type="text" id="gameImage"><br>
-  <label for="gameName" id="gameNameTitle">Game Name:</label> <input type="text" id="gameName"><br><br>
+  <div id="gameInputsContainer"></div>
+  <button onclick="addGameInput()">Add Game</button><br><br>
 
   <button onclick="generateCode()">Generate & Edit Code</button><br><br>
 
   <h3 id="generatedCodeTitle">Generated Code (you can edit before inserting):</h3>
-  <textarea id="codePreview" rows="6" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;"></textarea><br><br>
+  <textarea id="codePreview" rows="10" cols="80" style="background:#f0f0f0; padding:10px; border:1px solid #ccc;"></textarea><br><br>
 
   <button onclick="addGame()">Insert Code into HTML</button><br><br>
   <button onclick="downloadModifiedFile()">Download Modified File</button>
@@ -37,28 +49,21 @@
   <script>
     let originalContent = '';
     let sectionIds = [];
-    let isEnglish = true; // Default language is English
+    let isEnglish = true;
+    let sectionGames = {};
 
-    // Toggle language between English and Arabic
     function toggleLanguage() {
       isEnglish = !isEnglish;
       const languageElements = {
         'selectFileTitle': ['1. Select an HTML File', '1. اختر ملف HTML'],
         'chooseSectionTitle': ['2. Choose a Section', '2. اختر القسم'],
         'gameDetailsTitle': ['3. Enter Game Details', '3. أدخل تفاصيل اللعبة'],
-        'gameLinkTitle': ['Game Link:', 'رابط اللعبة:'],
-        'gameImageTitle': ['Game Image Link:', 'رابط صورة اللعبة:'],
-        'gameNameTitle': ['Game Name:', 'اسم اللعبة:'],
         'generatedCodeTitle': ['Generated Code (you can edit before inserting):', 'الكود المولد (يمكنك تعديله قبل الإدراج):'],
         'languageToggle': ['Switch to Arabic', 'التبديل إلى الإنجليزية']
       };
-
-      // Update text content based on language
       Object.keys(languageElements).forEach(id => {
         document.getElementById(id).textContent = isEnglish ? languageElements[id][0] : languageElements[id][1];
       });
-
-      // Toggle button text between languages
       document.getElementById('languageToggle').textContent = isEnglish ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية';
     }
 
@@ -80,31 +85,126 @@
       reader.readAsText(file);
     });
 
-    function generateCode() {
-      const link = document.getElementById('gameLink').value;
-      const image = document.getElementById('gameImage').value;
-      const name = document.getElementById('gameName').value;
+    function displaySectionGames() {
+      const sectionId = document.getElementById('sectionSelector').value;
+      const gamesContainer = document.getElementById('gamesContainer');
+      gamesContainer.innerHTML = '';
 
-      const buttonHTML = 
-`<button class="btn" onClick="installPkg('${link}')">
+      const sectionRegex = new RegExp(
+        `<div class="carousel-section" id="${sectionId}".*?>([\\s\\S]*?)</div>`, 'i'
+      );
+      const sectionMatch = originalContent.match(sectionRegex);
+      if (sectionMatch) {
+        const sectionContent = sectionMatch[1];
+        const gameMatches = [...sectionContent.matchAll(/<button class="btn" onClick="installPkg'(.*?)'">.*?<img src="(.*?)".*?data-tooltip="(.*?)"/g)];
+        
+        sectionGames[sectionId] = [];
+
+        gameMatches.forEach((match, index) => {
+          const gameLink = match[1];
+          const gameImage = match[2];
+          const gameName = match[3];
+
+          sectionGames[sectionId].push({ gameLink, gameImage, gameName });
+
+          const gameDiv = document.createElement('div');
+          gameDiv.classList.add('game-container');
+          gameDiv.innerHTML = `
+            <fieldset>
+              <legend>Game ${index + 1}</legend>
+              <label>Game Link:</label> <input type="text" class="gameLink" value="${gameLink}"><br>
+              <label>Game Image Link:</label> <input type="text" class="gameImage" value="${gameImage}"><br>
+              <label>Game Name:</label> <input type="text" class="gameName" value="${gameName}"><br>
+              <button onclick="deleteGame(${index})">Delete Game</button>
+            </fieldset>
+          `;
+          gamesContainer.appendChild(gameDiv);
+        });
+      }
+    }
+
+    function deleteGame(index) {
+      const sectionId = document.getElementById('sectionSelector').value;
+      sectionGames[sectionId].splice(index, 1);
+      displaySectionGames();
+    }
+
+    function addGameInput() {
+      const container = document.getElementById('gameInputsContainer');
+      const sectionOptions = sectionIds.map(id => `<option value="${id}">${id}</option>`).join('');
+
+      const gameDiv = document.createElement('div');
+      gameDiv.classList.add('game-container');
+      gameDiv.innerHTML = `
+        <fieldset>
+          <legend>New Game</legend>
+          <label>Section:</label> 
+          <select class="newGameSection">${sectionOptions}</select><br>
+          <label>Game Link:</label> <input type="text" class="gameLink"><br>
+          <label>Game Image Link:</label> <input type="text" class="gameImage"><br>
+          <label>Game Name:</label> <input type="text" class="gameName"><br>
+          <button onclick="this.parentElement.remove()">Remove</button>
+        </fieldset>
+      `;
+      container.appendChild(gameDiv);
+    }
+
+    function generateCode() {
+      const sections = document.querySelectorAll('.newGameSection');
+      const links = document.querySelectorAll('.gameLink');
+      const images = document.querySelectorAll('.gameImage');
+      const names = document.querySelectorAll('.gameName');
+
+      let codes = [];
+      for (let i = 0; i < links.length; i++) {
+        const section = sections[i] ? sections[i].value : '';
+        const link = links[i].value;
+        const image = images[i].value;
+        const name = names[i].value;
+
+        const buttonHTML = 
+`<!-- Section: ${section} -->
+<!-- ${name} -->
+<button class="btn" onClick="installPkg('${link}')">
   <img src="${image}" alt="Install App" class="btn-img" data-tooltip="${name}">
 </button>`;
+        codes.push(buttonHTML);
+      }
 
-      document.getElementById('codePreview').value = buttonHTML;
+      document.getElementById('codePreview').value = codes.join("\n\n");
     }
 
     function addGame() {
-      const sectionId = document.getElementById('sectionSelector').value;
-      const customCode = document.getElementById('codePreview').value;
+      const codeLines = document.getElementById('codePreview').value.split('\n');
+      let currentSection = '';
+      let currentCode = [];
 
+      for (let line of codeLines) {
+        const sectionMatch = line.match(/<!-- Section: (.+?) -->/);
+        if (sectionMatch) {
+          if (currentSection && currentCode.length > 0) {
+            insertIntoSection(currentSection, currentCode.join('\n'));
+            currentCode = [];
+          }
+          currentSection = sectionMatch[1];
+        } else if (line.trim() !== '' || currentCode.length > 0) {
+          currentCode.push(line);
+        }
+      }
+      if (currentSection && currentCode.length > 0) {
+        insertIntoSection(currentSection, currentCode.join('\n'));
+      }
+
+      alert("Games added successfully!");
+    }
+
+    function insertIntoSection(sectionId, customCode) {
       const sectionRegex = new RegExp(
         `(<div class="carousel-section" id="${sectionId}".*?>)([\\s\\S]*?)(</div>)`, 'i'
       );
       originalContent = originalContent.replace(sectionRegex, (match, start, content, end) => {
-        return `${start}${content.trim()}\n${customCode}\n${end}`;
+        return `${start}\n${customCode}\n${content.trim()}\n${end}`;
       });
-
-      alert("Game added successfully!");
     }
 
     function downloadModifiedFile() {
